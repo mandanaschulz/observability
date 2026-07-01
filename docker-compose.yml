@@ -7,8 +7,8 @@ services:
     image: fluent/fluent-bit:3.2
     container_name: fluentbit
     depends_on:
-      postgres:
-        condition: service_healthy
+      # postgres:
+      #   condition: service_healthy
       loki:
         condition: service_started
     volumes:
