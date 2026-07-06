@@ -1,0 +1,139 @@
+# One entry per topic you want streamed into TimescaleDB.
+# Adding a new sensor = adding a new entry here. No code changes needed
+# in bridge_node.py, regardless of the message type.
+#
+# Fields:
+#   topic:        the ROS topic name
+#   type:         the message type as "package/msg/MessageName"
+#   min_interval: seconds between samples actually written (throttle).
+#                 Use this for anything that publishes faster than you
+#                 need it stored (e.g. a 50Hz IMU you only need at 1Hz).
+
+# ── Power & Energy ────────────────────────────────────────────
+
+- topic: tethysONE/battery/left
+  type: sensor_msgs/msg/BatteryState
+  min_interval: 5.0
+  # Serves: battery_left_start/end_pct, energy_wh, peak/avg current,
+  #         min_voltage, charge_decay_wh_per_min
+
+- topic: tethysONE/battery/right
+  type: sensor_msgs/msg/BatteryState
+  min_interval: 5.0
+  # Serves: battery_right_start/end_pct, energy_wh, peak/avg current,
+  #         min_voltage, charge_decay_wh_per_min
+
+
+# ── Depth, Pressure, Temperature ─────────────────────────────
+
+- topic: tethysONE/keller_sensor/real_depth
+  type: std_msgs/msg/Float64
+  min_interval: 1.0
+  # Serves: max_depth_m, avg_depth_m, depth-vs-time profile
+
+- topic: tethysONE/keller_sensor/pressure
+  type: sensor_msgs/msg/FluidPressure
+  min_interval: 1.0
+  # Serves: max_pressure_pa, avg_pressure_pa
+
+- topic: tethysONE/keller_sensor/temperature
+  type: sensor_msgs/msg/Temperature
+  min_interval: 5.0
+  # Serves: water_temperature_c
+
+- topic: tethysONE/led/pressure
+  type: sensor_msgs/msg/FluidPressure
+  min_interval: 5.0
+  # Serves: average_pressure_on_core (your "led/pressure" note)
+
+
+# ── Position / Distance / Speed ───────
+
+- topic: tethysONE/controller/meas_pose
+  type: geometry_msgs/msg/PoseStamped
+  min_interval: 1.0
+  # Serves: total_distance_m (pose integration),
+  #         covered_area_m2, target_pose_error_std (paired with target_pose_global)
+
+- topic: tethysONE/controller/meas_twist
+  type: geometry_msgs/msg/TwistStamped
+  min_interval: 1.0
+  # Serves: max_speed_x/y/z_ms, avg_speed_ms,
+  #         target_twist_error_std (paired with target_twist_local)
+
+
+# ── Control Setpoints / Targets ──
+
+- topic: tethysONE/controller/target_pose_local
+  type: geometry_msgs/msg/PoseStamped
+  min_interval: 1.0
+  # Serves: position_hold error std (target vs meas_pose)
+
+- topic: tethysONE/controller/target_twist_local
+  type: geometry_msgs/msg/TwistStamped
+  min_interval: 1.0
+  # Serves: position_hold twist error std (target vs meas_twist)
+
+- topic: tethysONE/controller/target_altitude
+  type: std_msgs/msg/Float32
+  min_interval: 1.0
+  # Serves: altitude_hold_error_std (paired with meas_altitude)
+
+- topic: tethysONE/controller/meas_altitude
+  type: geometry_msgs/msg/PointStamped
+  min_interval: 1.0
+  # Serves: altitude_hold_error_std (actual altitude)
+
+- topic: tethysONE/controller/cmd_vel
+  type: geometry_msgs/msg/Twist
+  min_interval: 1.0
+  # Serves: vel_cmd vs real velocity diff
+  #         (your "average difference of vel_cmd and real velocity")
+
+
+# ── Orientation Hold ──────────────────────────────────────────
+
+- topic: tethysONE/imu_0/data
+  type: sensor_msgs/msg/Imu
+  min_interval: 1.0
+  # Serves: orientation_hold_error_std, heading_deviation_std,
+  #         max speed via IMU straight/lateral/down
+
+- topic: tethysONE/imu_0/mip/ekf/accel_bias
+  type: geometry_msgs/msg/Vector3Stamped
+  min_interval: 5.0
+  # Serves: imu_bias_static (accel)
+
+- topic: tethysONE/imu_0/mip/ekf/gyro_bias
+  type: geometry_msgs/msg/Vector3Stamped
+  min_interval: 5.0
+  # Serves: imu_bias_static (gyro)
+
+
+# ── DVL  ─
+
+- topic: tethysONE/dvl_0/twist
+  type: geometry_msgs/msg/TwistWithCovarianceStamped
+  min_interval: 1.0
+  # Serves: avg/max speed, vel_cmd vs real velocity diff
+
+
+# ── Localization Quality ──────────────────────────────────────
+
+- topic: tethysONE/localization/pose
+  type: geometry_msgs/msg/PoseWithCovarianceStamped
+  min_interval: 1.0
+  # Serves: localization_good/degraded/lost_pct (via covariance),
+  #         localization jump count (position delta over threshold)
+
+- topic: tethysONE/localization/twist_local
+  type: geometry_msgs/msg/TwistWithCovarianceStamped
+  min_interval: 1.0
+  # Serves: localization quality / velocity covariance
+
+# ── Thruster ──────────────────────────────────
+
+- topic: tethysONE/thruster
+  type: std_msgs/msg/Int16MultiArray
+  min_interval: 1.0
+  # Serves: thruster RPM/load, peak current correlation
