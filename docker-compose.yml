@@ -1,14 +1,15 @@
 networks:
   observability-net:
     driver: bridge
+    #external: true
 services:
 
   fluent-bit:
     image: fluent/fluent-bit:3.2
     container_name: fluentbit
     depends_on:
-      # postgres:
-      #   condition: service_healthy
+      postgres:
+        condition: service_healthy
       loki:
         condition: service_started
     volumes:
@@ -26,51 +27,53 @@ services:
       - observability-net
     restart: unless-stopped
 
-  # # ─── ROS TOPICS  ───────────────────────────────────────────────
+  # ─── ROS TOPICS  ───────────────────────────────────────────────
 
-  # postgres:
-  #   build: ./postgres
-  #   container_name: postgres
-  #   environment:
-  #     POSTGRES_USER: postgres
-  #     POSTGRES_PASSWORD: changeme
-  #     POSTGRES_DB: robot_analytics
-  #   volumes:
-  #     - /home/tethys/observability/data/postgres:/var/lib/postgresql/data #!!
-  #     - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
-  #   command: [
-  #     "postgres", 
-  #     "-c", "shared_preload_libraries=pg_cron", 
-  #     "-c", "cron.database_name=robot_analytics"
-  #   ]
-  #   ports:
-  #     - "5432:5432"
-  #   networks:
-  #     - observability-net
-  #   healthcheck:
-  #     test: ["CMD-SHELL", "pg_isready -U postgres -d robot_analytics"]
-  #     interval: 5s
-  #     timeout: 5s
-  #     retries: 10
-  #   restart: unless-stopped
+  postgres:
+    build: ./postgres
+    container_name: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: robot_analytics
+    volumes:
+      - /home/tethys/dev/observability/data/postgres:/var/lib/postgresql/data #!!
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    command: [
+      "postgres", 
+      "-c", "shared_preload_libraries=pg_cron", 
+      "-c", "cron.database_name=robot_analytics"
+    ]
+    ports:
+      - "5432:5432"
+    networks:
+      - observability-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d robot_analytics"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
 
-  # ros2-bridge:
-  #   build: ./ros2_bridge
-  #   container_name: ros2_bridge
-  #   network_mode: host 
-  #   environment:
-  #     ROS_DOMAIN_ID: "0" 
-  #   depends_on:
-  #     fluent-bit:
-  #       condition: service_started
-  #   volumes:
-  #     - ./ros2_bridge/manifest.yaml:/app/manifest.yaml:ro
-  #   command:
-  #     - "--manifest"
-  #     - "/app/manifest.yaml"
-  #     - "--fluentbit-url"
-  #     - "http://127.0.0.1:8888/" 
-  #   restart: unless-stopped
+  rostopic_bridge:
+    build: ./rostopic_bridge
+    container_name: rostopic_bridge
+    network_mode: host
+    extra_hosts:
+      - "fluentbit:host-gateway"  
+    environment:
+      ROS_DOMAIN_ID: "0" 
+    depends_on:
+      fluent-bit:
+        condition: service_started
+    volumes:
+      - ./rostopic_bridge/manifest.yaml:/app/manifest.yaml:ro
+    command:
+      - "--manifest"
+      - "/app/manifest.yaml"
+      - "--fluentbit-url"
+      - "http://fluentbit:8888/" 
+    restart: unless-stopped
 
   # ─── LOGS  ───────────────────────────────────────────────
 
@@ -87,7 +90,7 @@ services:
       - observability-net
     restart: unless-stopped
 
-# # ─── SYSTEM HEALTH  ───────────────────────────────────────────────
+# ─── SYSTEM HEALTH  ───────────────────────────────────────────────
 
 #   prometheus:
 #     image: prom/prometheus:v3.4.0
@@ -95,7 +98,7 @@ services:
 #     volumes:
 #       - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
 #       - ./prometheus/alert.rules:/etc/prometheus/alert.rules:ro
-#       - /home/tethys/observability/data/prometheus:/prometheus
+#       - /home/tethys/dev/observability/data/prometheus:/prometheus
 #     command:
 #       - '--config.file=/etc/prometheus/prometheus.yml'
 #       - '--storage.tsdb.path=/prometheus'
@@ -162,9 +165,22 @@ services:
       - observability-net
     restart: unless-stopped
 
+  pgadmin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: you@example.com
+      PGADMIN_DEFAULT_PASSWORD: somepassword
+    ports:
+      - "8081:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    networks:
+      - observability-net
+
 volumes:
   fluent-bit-storage:
   grafana-data:
+  pgadmin_data:
 
 
 # alertmanager:

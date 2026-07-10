@@ -46,6 +46,11 @@
   min_interval: 5.0
   # Serves: average_pressure_on_core (your "led/pressure" note)
 
+- topic: tethysONE/controller/active_modes
+  type: std_msgs/msg/Int16MultiArray
+  min_interval: 5.0
+  # Serves: active_modes 
+
 
 # ── Position / Distance / Speed ───────
 
@@ -93,7 +98,7 @@
 
 # ── Orientation Hold ──────────────────────────────────────────
 
-- topic: tethysONE/imu_0/data
+- topic: tethysONE/imu_0/data_corr
   type: sensor_msgs/msg/Imu
   min_interval: 1.0
   # Serves: orientation_hold_error_std, heading_deviation_std,
@@ -116,6 +121,11 @@
   type: geometry_msgs/msg/TwistWithCovarianceStamped
   min_interval: 1.0
   # Serves: avg/max speed, vel_cmd vs real velocity diff
+
+- topic: tethysONE/dvl_0/altitude
+  type: geometry_msgs/msg/PointStamped
+  min_interval: 5.0
+  # Serves: avg/max altitude, altitude_hold_error_std
 
 
 # ── Localization Quality ──────────────────────────────────────

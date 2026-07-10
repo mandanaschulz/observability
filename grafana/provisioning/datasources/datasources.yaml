@@ -6,6 +6,21 @@ datasources:
     url: http://loki:3100
     isDefault: true
 
+  - name: tethys_ops
+    type: postgres
+    access: proxy
+    url: postgres:5432          # or IP:port if not on same docker network
+    database: tethys_ops
+    user: grafana_ro            
+    secureJsonData:
+      password: ${GRAFANA_PG_PASSWORD}
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1500     # match your actual PG version, e.g. 1500 = 15.x
+      timescaledb: false
+    isDefault: false
+    editable: false
+
   # - name: Prometheus
   #   type: prometheus
   #   access: proxy
